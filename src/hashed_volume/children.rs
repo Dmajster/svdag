@@ -31,8 +31,8 @@ impl Children {
         };
     }
 
-    pub fn are_interesting(&self) -> bool {
-        self.child_bits > 0b0000_0000 //&& self.child_bits < 0b1111_1111 TODO fix early termination on completly full nodes
+    pub fn have_occupied_children(&self) -> bool {
+        self.child_bits > 0b0000_0000
     }
 
     pub fn count_occupied(&self) -> usize {

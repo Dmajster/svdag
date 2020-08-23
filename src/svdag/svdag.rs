@@ -34,9 +34,9 @@ pub union SvdagValue {
 impl fmt::Debug for SvdagValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         unsafe {
-            f.debug_struct("SvdagValue2")
-                .field("as pointer", &self.pointer)
-                .field("as node", &self.node)
+            f.debug_struct("Value")
+                .field("p", &self.pointer)
+                .field("n", &self.node)
                 .finish()
         }
     }
@@ -94,7 +94,7 @@ impl Svdag {
 
             //If it's not occupied there won't be a child node so the space is empty
             if !is_child_occupied {
-                return false; //TODO fix early termination on completly full nodes
+                return false;
             }
 
             //Otherwise find the child area's consecutive index and pass it off to the recursion

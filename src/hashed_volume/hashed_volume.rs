@@ -99,14 +99,14 @@ impl HashedVolume {
                     let node7 = source_hashed_volume.get((x_src + 1, y_src + 1, z_src + 1));
 
                     let mut children = Children::new();
-                    children.set(0, node0.children.are_interesting());
-                    children.set(1, node1.children.are_interesting());
-                    children.set(2, node2.children.are_interesting());
-                    children.set(3, node3.children.are_interesting());
-                    children.set(4, node4.children.are_interesting());
-                    children.set(5, node5.children.are_interesting());
-                    children.set(6, node6.children.are_interesting());
-                    children.set(7, node7.children.are_interesting());
+                    children.set(0, node0.children.have_occupied_children());
+                    children.set(1, node1.children.have_occupied_children());
+                    children.set(2, node2.children.have_occupied_children());
+                    children.set(3, node3.children.have_occupied_children());
+                    children.set(4, node4.children.have_occupied_children());
+                    children.set(5, node5.children.have_occupied_children());
+                    children.set(6, node6.children.have_occupied_children());
+                    children.set(7, node7.children.have_occupied_children());
 
                     let mut hasher = DefaultHasher::new();
                     node0.hash.hash(&mut hasher);
