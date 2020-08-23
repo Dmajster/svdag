@@ -6,11 +6,27 @@ use crate::volume::{IsVolume, Volume, VolumePosition};
 #[derive(Clone, Debug)]
 pub struct Svdag {
     pub depth: u8,
-    pub nodes: Vec<SvdagNode>,
+    pub nodes: Vec<SvdagValue>,
+}
+
+#[derive(Copy, Clone)]
+struct SvdagPointer {
+    value: i16,
+}
+
+#[derive(Copy, Clone)]
+struct SvdagNode {
+    children: Children,
+    padding: u8,
+}
+
+pub union SvdagValue2 {
+    pointer: SvdagPointer,
+    node: SvdagNode,
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum SvdagNode {
+pub enum SvdagValue {
     Pointer(i16),
     Node(Children, u8),
 }
@@ -39,11 +55,6 @@ impl Svdag {
         current_depth: u8,
         (filter_position, filter_dimensions): (&mut VolumePosition, &mut VolumeDimensions),
     ) -> bool {
-        // println!(
-        //     "position: {:?}, dimensions: {:?}",
-        //     filter_position, filter_dimensions
-        // );
-
         //Half the filter dimensions through reference for better performance
         filter_dimensions.0 /= 2;
         filter_dimensions.1 /= 2;
@@ -51,47 +62,28 @@ impl Svdag {
 
         //Determine which child index to check
         let mut child_index = 0;
-        child_index += if target_position.0 >= filter_position.0 + filter_dimensions.0 {
+        if target_position.0 >= filter_position.0 + filter_dimensions.0 {
             filter_position.0 += filter_dimensions.0;
-            4
-        } else {
-            0
-        };
-        child_index += if target_position.1 >= filter_position.1 + filter_dimensions.1 {
+            child_index += 4;
+        }
+        if target_position.1 >= filter_position.1 + filter_dimensions.1 {
             filter_position.1 += filter_dimensions.2;
-            2
-        } else {
-            0
-        };
-        child_index += if target_position.2 >= filter_position.2 + filter_dimensions.2 {
+            child_index += 2;
+        }
+        if target_position.2 >= filter_position.2 + filter_dimensions.2 {
             filter_position.2 += filter_dimensions.2;
-            1
-        } else {
-            0
-        };
-
-        let mut node = self.nodes.get(node_index).unwrap();
-
-        // println!(
-        //     "depth: {}, node index: {} child index: {}",
-        //     current_depth, node_index, child_index
-        // );
-
-        while let SvdagNode::Pointer(relative_offset) = node {
-            node = self
-                .nodes
-                .get((node_index as isize + *relative_offset as isize) as usize)
-                .unwrap();
+            child_index += 1;
         }
 
-        if let SvdagNode::Node(children, _) = node {
+        let node = self.nodes.get(node_index).unwrap();
+
+        if let SvdagValue::Node(children, _) = node {
             //Check if this node's child area is occupied
             let is_child_occupied = children.get(child_index);
 
             //If it's not occupied there won't be a child node so the space is empty
             if !is_child_occupied {
-                //println!("occupied = false! children: {:08b}", children.child_bits);
-                return false //TODO fix early termination on completly full nodes
+                return false; //TODO fix early termination on completly full nodes
             }
 
             //Otherwise find the child area's consecutive index and pass it off to the recursion
@@ -100,13 +92,15 @@ impl Svdag {
             if current_depth + 1 < self.depth {
                 let child_pointer = self.nodes.get(child_pointer_index).unwrap();
 
-                if let SvdagNode::Pointer(relative_offset) = child_pointer {
+                if let SvdagValue::Pointer(relative_offset) = child_pointer {
                     return self.get_recursive(
                         target_position,
                         (child_pointer_index as isize + *relative_offset as isize) as usize,
                         current_depth + 1,
                         (filter_position, filter_dimensions),
                     );
+                } else {
+                    panic!()
                 }
             } else {
                 return is_child_occupied;

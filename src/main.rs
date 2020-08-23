@@ -7,11 +7,11 @@ mod volume;
 use volume::{IsVolume, Volume};
 
 fn main() {
-    let mut volume = Volume::new(6);
+    let mut volume = Volume::new(3);
     let volume_dimensions = volume.get_dimensions();
 
-    let sphere_position = (32, 32, 32);
-    let sphere_radius = 16.0;
+    let sphere_position = (8, 8, 8);
+    let sphere_radius = 4.0;
     for x in 0..volume_dimensions.0 {
         for y in 0..volume_dimensions.1 {
             for z in 0..volume_dimensions.2 {

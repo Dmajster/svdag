@@ -1,4 +1,4 @@
-use super::{svdag::SvdagNode, Svdag};
+use super::{svdag::SvdagValue, Svdag};
 use crate::hashed_volume::HashedVolume;
 use crate::volume::Volume;
 use crate::volume::{IsVolume, VolumePosition};
@@ -80,13 +80,13 @@ impl SvdagBuilder {
             node_hashes.insert(node.hash, current_node_absolute_index);
 
             //Preamptively push the node in the array so it maintains the parent index < child index rule
-            new_graph.nodes.push(SvdagNode::Node(node.children, 0));
+            new_graph.nodes.push(SvdagValue::Node(node.children, 0));
 
             //Iterate over all hash layers to build the complete tree, +1 is because we don't need nodes for leaf children
             if layer_index + 1 < self.hash_volume_layers.len() {
                 //Reserve space for all children
                 for _ in 0..children_count {
-                    new_graph.nodes.push(SvdagNode::Pointer(0))
+                    new_graph.nodes.push(SvdagValue::Pointer(0))
                 }
 
                 let mut child_index_offset = 1; //Relative offset where in array to store child pointers
@@ -110,7 +110,7 @@ impl SvdagBuilder {
                     let child_offset_index = (current_node_absolute_index + child_index_offset) as isize;
 
                     //Store a relative offset to the child node at the calculated child offset index
-                    new_graph.nodes[child_offset_index as usize] = SvdagNode::Pointer(
+                    new_graph.nodes[child_offset_index as usize] = SvdagValue::Pointer(
                         (child_node_absolute_index as isize - child_offset_index) as i16,
                     );
 

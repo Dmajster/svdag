@@ -36,13 +36,7 @@ impl Children {
     }
 
     pub fn count_occupied(&self) -> usize {
-        let mut count = 0;
-        for index in 0..8 {
-            if self.get(index) {
-                count += 1;
-            }
-        }
-        count
+        self.child_bits.count_ones() as usize
     }
 }
 
