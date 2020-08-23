@@ -2,33 +2,44 @@ use super::SvdagBuilder;
 use crate::hashed_volume::Children;
 use crate::volume::VolumeDimensions;
 use crate::volume::{IsVolume, Volume, VolumePosition};
+use std::fmt;
 
+#[repr(C)]
 #[derive(Clone, Debug)]
 pub struct Svdag {
     pub depth: u8,
     pub nodes: Vec<SvdagValue>,
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct SvdagPointer {
+    pub value: i16,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct SvdagNode {
+    pub children: Children,
+    pub padding: u8,
+}
+
+#[repr(C)]
 #[derive(Copy, Clone)]
-struct SvdagPointer {
-    value: i16,
+pub union SvdagValue {
+    pub pointer: SvdagPointer,
+    pub node: SvdagNode,
 }
 
-#[derive(Copy, Clone)]
-struct SvdagNode {
-    children: Children,
-    padding: u8,
-}
-
-pub union SvdagValue2 {
-    pointer: SvdagPointer,
-    node: SvdagNode,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum SvdagValue {
-    Pointer(i16),
-    Node(Children, u8),
+impl fmt::Debug for SvdagValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        unsafe {
+            f.debug_struct("SvdagValue2")
+                .field("as pointer", &self.pointer)
+                .field("as node", &self.node)
+                .finish()
+        }
+    }
 }
 
 impl Svdag {
@@ -75,11 +86,11 @@ impl Svdag {
             child_index += 1;
         }
 
-        let node = self.nodes.get(node_index).unwrap();
+        unsafe {
+            let node = &self.nodes.get(node_index).unwrap().node;
 
-        if let SvdagValue::Node(children, _) = node {
             //Check if this node's child area is occupied
-            let is_child_occupied = children.get(child_index);
+            let is_child_occupied = node.children.get(child_index);
 
             //If it's not occupied there won't be a child node so the space is empty
             if !is_child_occupied {
@@ -87,27 +98,21 @@ impl Svdag {
             }
 
             //Otherwise find the child area's consecutive index and pass it off to the recursion
-            let child_pointer_index = node_index + children.get_n(child_index) + 1;
+            let child_pointer_index = node_index + node.children.get_n(child_index) + 1;
 
             if current_depth + 1 < self.depth {
-                let child_pointer = self.nodes.get(child_pointer_index).unwrap();
+                let child_pointer = &self.nodes.get(child_pointer_index).unwrap().pointer;
 
-                if let SvdagValue::Pointer(relative_offset) = child_pointer {
-                    return self.get_recursive(
-                        target_position,
-                        (child_pointer_index as isize + *relative_offset as isize) as usize,
-                        current_depth + 1,
-                        (filter_position, filter_dimensions),
-                    );
-                } else {
-                    panic!()
-                }
+                return self.get_recursive(
+                    target_position,
+                    (child_pointer_index as isize + child_pointer.value as isize) as usize,
+                    current_depth + 1,
+                    (filter_position, filter_dimensions),
+                );
             } else {
                 return is_child_occupied;
             }
         }
-
-        panic!()
     }
 }
 
