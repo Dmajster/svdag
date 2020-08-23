@@ -4,6 +4,7 @@ use svdag::Svdag;
 mod hashed_volume;
 
 mod volume;
+use std::{fs::File, io::Write, mem};
 use volume::{IsVolume, Volume};
 
 fn main() {
@@ -62,5 +63,17 @@ fn main() {
         array_size,
         svdag_size,
         array_size as f32 / svdag_size as f32 * 100.0
-    )
+    );
+
+    unsafe {
+        let nodes_binary = std::slice::from_raw_parts(
+            svdag.nodes.as_ptr() as *const u8,
+            svdag.nodes.len() * mem::size_of::<i16>(),
+        );
+
+        let mut file = File::create("svdag.bin").unwrap();
+        // Write a slice of bytes to the file
+        file.write_all(&[svdag.depth]).unwrap();
+        file.write_all(nodes_binary).unwrap();
+    }
 }
