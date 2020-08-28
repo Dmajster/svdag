@@ -5,10 +5,10 @@ mod hashed_volume;
 
 mod volume;
 use std::{fs::File, io::Write, mem};
-use volume::{IsVolume, Volume};
+use volume::{CubicVolume, IsVolume};
 
 fn main() {
-    let mut volume = Volume::new(3);
+    let mut volume = CubicVolume::new(3);
     let volume_dimensions = volume.get_dimensions();
 
     let sphere_position = (8, 8, 8);
@@ -24,7 +24,7 @@ fn main() {
                 .sqrt();
 
                 if distance < sphere_radius {
-                    volume.set(position, true);
+                    *volume.get_mut(position) = true;
                 }
             }
         }

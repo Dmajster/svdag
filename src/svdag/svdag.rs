@@ -1,7 +1,7 @@
 use super::SvdagBuilder;
 use crate::hashed_volume::Children;
 use crate::volume::VolumeDimensions;
-use crate::volume::{IsVolume, Volume, VolumePosition};
+use crate::volume::{DensityVolume, IsVolume, VolumePosition};
 use std::fmt;
 
 #[repr(C)]
@@ -94,7 +94,7 @@ impl Svdag {
 
             //If it's not occupied there won't be a child node so the space is empty
             if !is_child_occupied {
-                return false;
+                return false
             }
 
             //Otherwise find the child area's consecutive index and pass it off to the recursion
@@ -103,23 +103,23 @@ impl Svdag {
             if current_depth + 1 < self.depth {
                 let child_pointer = &self.nodes.get(child_pointer_index).unwrap().pointer;
 
-                return self.get_recursive(
+                self.get_recursive(
                     target_position,
                     (child_pointer_index as isize + child_pointer.value as isize) as usize,
                     current_depth + 1,
                     (filter_position, filter_dimensions),
-                );
+                )
             } else {
-                return is_child_occupied;
+                is_child_occupied
             }
         }
     }
 }
 
-impl From<&Volume> for Svdag {
-    fn from(volume: &Volume) -> Self {
+impl From<&DensityVolume> for Svdag {
+    fn from(density_volume: &DensityVolume) -> Self {
         SvdagBuilder::new()
-            .create_layers(volume)
+            .create_layers(density_volume)
             .create_graph()
             .finish()
     }

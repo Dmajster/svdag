@@ -1,13 +1,13 @@
 use std::hash::{Hash, Hasher};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Children {
     pub child_bits: u8,
 }
 
 impl Children {
-    pub fn new() -> Children {
-        Children { child_bits: 0 }
+    pub fn new(child_bits: u8) -> Children {
+        Children { child_bits }
     }
 
     pub fn get(&self, child_index: usize) -> bool {

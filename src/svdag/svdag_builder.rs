@@ -1,13 +1,14 @@
-use super::{svdag::SvdagValue, Svdag, SvdagNode, SvdagPointer};
+use super::{Svdag, SvdagNode, SvdagPointer, SvdagValue};
 
-use crate::hashed_volume::HashedVolume;
-use crate::volume::Volume;
-use crate::volume::{IsVolume, VolumePosition};
+use crate::{
+    hashed_volume::HashedVolume,
+    volume::{DensityVolume, IsVolume, VolumeIndex, VolumePosition},
+};
 use std::collections::HashMap;
 
 pub struct SvdagBuilder {
     hash_volume_layers: Vec<HashedVolume>,
-    node_hashes: HashMap<u64, usize>,
+    node_hashes: HashMap<u64, VolumeIndex>,
     graph: Svdag,
 }
 
@@ -20,19 +21,25 @@ impl SvdagBuilder {
         }
     }
 
-    pub fn create_layers(&mut self, volume: &Volume) -> &mut Self {
+    pub fn create_layers(&mut self, volume: &DensityVolume) -> &mut Self {
         println!("Volume dimensions: {:?}", volume.get_dimensions());
         self.graph.depth = volume.depth;
 
         let mut hashed_volume = HashedVolume::from(volume);
 
-        while hashed_volume.dimensions.0 >= 1 {
+        loop {
             let new_hashed_volume = HashedVolume::from_hashed_volume(&hashed_volume);
 
-            self.hash_volume_layers.insert(0, hashed_volume);
+            self.hash_volume_layers.push(hashed_volume);
 
             hashed_volume = new_hashed_volume;
+
+            if hashed_volume.get_dimensions().0 == 1 {
+                self.hash_volume_layers.push(hashed_volume);
+                break;
+            }
         }
+        self.hash_volume_layers.reverse();
 
         self
     }
@@ -100,7 +107,7 @@ impl SvdagBuilder {
                 let mut child_index_offset = 1; //Relative offset where in array to store child pointers
 
                 //Recurse trough all children
-                for child_position_index in 0..8 {
+                for (child_position_index, _) in children_positions.iter().enumerate() {
                     //Go to next child if this one is not occupied
                     if !node.children.get(child_position_index) {
                         continue;
@@ -133,7 +140,7 @@ impl SvdagBuilder {
         }
         //If checked node is a duplicate
         else {
-            duplicate_node.unwrap().clone() as i16
+            *duplicate_node.unwrap() as i16
         }
     }
 

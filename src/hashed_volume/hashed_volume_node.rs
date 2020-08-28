@@ -1,6 +1,5 @@
-
 use super::Children;
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct HashedVolumeNode {
     pub hash: u64,
     pub children: Children,
@@ -8,9 +7,6 @@ pub struct HashedVolumeNode {
 
 impl HashedVolumeNode {
     pub fn new(hash: u64, children: Children) -> Self {
-        Self {
-            hash: hash,
-            children: children,
-        }
+        Self { hash, children }
     }
 }
